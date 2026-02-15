@@ -1,0 +1,13 @@
+*.db
+*.db-wal
+*.db-shm
+__pycache__/
+*.pyc
+*.pyo
+.claude/
+*.tar.gz
+.env
+.env.*
+session-log-*.txt
+venv/
+.venv/

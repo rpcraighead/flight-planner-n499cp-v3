@@ -1,0 +1,18 @@
+export const state = {
+    currentRoute: null,
+    currentWeather: null,
+    currentWB: null,
+    currentAircraft: null,
+    aircraftList: [],
+    flightPlans: [],
+    tileSources: null,
+    mainMap: null,
+    previewMap: null,
+    routeLayer: null,
+    previewRouteLayer: null,
+    tfrLayer: null,
+    pendingTfrs: null,
+    waypoints: [],
+    editMode: false,
+    editingAircraftId: null,
+};

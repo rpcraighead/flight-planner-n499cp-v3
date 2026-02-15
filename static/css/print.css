@@ -1,0 +1,11 @@
+@media print {
+    .app-header, .tab-bar, .btn, .map-container,
+    .form-group, .waypoint-controls, .modal-overlay { display: none !important; }
+
+    .main-content { max-width: 100%; padding: 0; }
+    .tab-panel { display: block !important; }
+    .card { box-shadow: none; border: 1px solid #ccc; page-break-inside: avoid; }
+
+    body { font-size: 10pt; color: black; background: white; }
+    .data-table th { background: #333; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

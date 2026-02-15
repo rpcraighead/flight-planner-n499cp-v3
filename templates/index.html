@@ -1,0 +1,354 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Header -->
+<header class="app-header">
+    <div class="logo">
+        <img src="/static/img/logo.jpg" alt="CAP Logo">
+        <h1>Flight Planner v3</h1>
+    </div>
+    <div class="header-controls">
+        <select id="aircraft-selector" class="aircraft-select" title="Select aircraft"></select>
+        <div class="db-status">
+            <span class="dot" id="db-dot"></span>
+            <span id="db-label">Loading...</span>
+        </div>
+        <button class="btn btn-sm btn-outline" id="btn-update-db" style="color:white;border-color:rgba(255,255,255,0.3)">Update DB</button>
+    </div>
+</header>
+
+<!-- Tab bar -->
+<nav class="tab-bar">
+    <button class="tab-btn active" data-tab="plan">Plan</button>
+    <button class="tab-btn" data-tab="map">Map</button>
+    <button class="tab-btn" data-tab="briefing">Briefing</button>
+    <button class="tab-btn" data-tab="performance">Performance</button>
+    <button class="tab-btn" data-tab="aircraft">Aircraft</button>
+    <button class="tab-btn" data-tab="reference">Reference</button>
+</nav>
+
+<!-- Content -->
+<div class="main-content">
+
+    <!-- PLAN TAB -->
+    <div id="tab-plan" class="tab-panel active">
+        <!-- Saved plans bar -->
+        <div class="card">
+            <div class="flex-between" style="gap:var(--space-sm);flex-wrap:wrap">
+                <div class="input-row" style="flex:1;min-width:200px">
+                    <div class="form-group" style="flex:2">
+                        <label>Saved Plans</label>
+                        <select id="saved-plans-select" class="form-control">
+                            <option value="">-- New Flight Plan --</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-outline btn-sm" id="btn-load-plan">Load</button>
+                    <button class="btn btn-outline btn-sm" id="btn-delete-plan">Del</button>
+                </div>
+                <button class="btn btn-secondary btn-sm" id="btn-save-plan">Save Plan</button>
+            </div>
+        </div>
+
+        <!-- Route inputs -->
+        <div class="card">
+            <div class="card-header">Route</div>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Departure</label>
+                    <input type="text" id="departure" class="form-control" placeholder="KSEE" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>Destination</label>
+                    <input type="text" id="destination" class="form-control" placeholder="KCRQ" autocomplete="off">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Waypoints</label>
+                <div class="input-row">
+                    <input type="text" id="waypoint-input" class="form-control" placeholder="Add VOR, NDB, or airport..." autocomplete="off">
+                    <button class="btn btn-outline btn-sm" id="btn-add-waypoint">Add</button>
+                </div>
+                <ul class="waypoint-list" id="waypoint-list" style="margin-top:var(--space-sm)"></ul>
+            </div>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>Departure Time (Local)</label>
+                    <input type="datetime-local" id="departure-time" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label>Cruise Altitude (ft)</label>
+                    <select id="cruise-altitude" class="form-control">
+                        <option value="3000">3,000</option>
+                        <option value="4000">4,000</option>
+                        <option value="4500">4,500</option>
+                        <option value="5500">5,500</option>
+                        <option value="6000" selected>6,000</option>
+                        <option value="6500">6,500</option>
+                        <option value="7500">7,500</option>
+                        <option value="8000">8,000</option>
+                        <option value="8500">8,500</option>
+                        <option value="9500">9,500</option>
+                        <option value="10000">10,000</option>
+                        <option value="10500">10,500</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Engine RPM</label>
+                    <select id="cruise-rpm" class="form-control">
+                        <option value="2600">2600 RPM</option>
+                        <option value="2500">2500 RPM</option>
+                        <option value="2400" selected>2400 RPM (Economy)</option>
+                    </select>
+                </div>
+            </div>
+            <button class="btn btn-primary btn-lg" id="btn-calculate" style="width:100%">Calculate Route</button>
+        </div>
+
+        <!-- Route results -->
+        <div id="route-results" class="hidden">
+            <div class="card">
+                <div class="card-header">
+                    <span>Route Summary</span>
+                    <button class="btn btn-sm btn-outline" id="btn-export-pdf">Export PDF</button>
+                </div>
+                <div class="summary-grid" id="route-summary"></div>
+            </div>
+            <div class="card">
+                <div class="card-header">Segments</div>
+                <div style="overflow-x:auto">
+                    <table class="data-table" id="segments-table">
+                        <thead>
+                            <tr>
+                                <th>From</th><th>To</th><th>Dist (nm)</th>
+                                <th>TC</th><th>WCA</th><th>MH</th>
+                                <th>GS (kt)</th><th>Time (min)</th><th>Fuel (gal)</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">Fuel Summary</div>
+                <div class="summary-grid" id="fuel-summary"></div>
+            </div>
+            <div id="route-preview-map" class="route-preview-map"></div>
+        </div>
+    </div>
+
+    <!-- MAP TAB -->
+    <div id="tab-map" class="tab-panel">
+        <div class="map-toolbar">
+            <button class="btn btn-sm btn-outline" id="btn-center-route">Center on Route</button>
+            <button class="btn btn-sm btn-outline" id="btn-toggle-edit-mode">Edit Route on Map</button>
+        </div>
+        <div id="main-map" class="map-container"></div>
+    </div>
+
+    <!-- BRIEFING TAB -->
+    <div id="tab-briefing" class="tab-panel">
+        <div class="card">
+            <div class="card-header">
+                <span>Weather Briefing</span>
+                <button class="btn btn-sm btn-primary" id="btn-get-briefing">Get Briefing</button>
+            </div>
+            <div id="briefing-content">
+                <p class="text-secondary">Calculate a route first, then get your weather briefing.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PERFORMANCE TAB -->
+    <div id="tab-performance" class="tab-panel">
+        <!-- Takeoff -->
+        <div class="card">
+            <div class="card-header">Takeoff Performance</div>
+            <div class="grid-4">
+                <div class="form-group">
+                    <label>Weight (lbs)</label>
+                    <input type="number" id="to-weight" class="form-control" value="2550">
+                </div>
+                <div class="form-group">
+                    <label>Press. Alt (ft)</label>
+                    <input type="number" id="to-altitude" class="form-control" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Temp (°C)</label>
+                    <input type="number" id="to-temp" class="form-control" value="15">
+                </div>
+                <div class="form-group">
+                    <label>Headwind (kt)</label>
+                    <input type="number" id="to-headwind" class="form-control" value="0">
+                </div>
+            </div>
+            <button class="btn btn-primary" id="btn-calc-takeoff">Calculate Takeoff</button>
+            <div id="takeoff-results" class="hidden" style="margin-top:var(--space-md)">
+                <div class="summary-grid" id="takeoff-summary"></div>
+            </div>
+        </div>
+
+        <!-- Landing -->
+        <div class="card">
+            <div class="card-header">Landing Performance</div>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>Press. Alt (ft)</label>
+                    <input type="number" id="ld-altitude" class="form-control" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Temp (°C)</label>
+                    <input type="number" id="ld-temp" class="form-control" value="15">
+                </div>
+                <div class="form-group">
+                    <label>Headwind (kt)</label>
+                    <input type="number" id="ld-headwind" class="form-control" value="0">
+                </div>
+            </div>
+            <button class="btn btn-primary" id="btn-calc-landing">Calculate Landing</button>
+            <div id="landing-results" class="hidden" style="margin-top:var(--space-md)">
+                <div class="summary-grid" id="landing-summary"></div>
+            </div>
+        </div>
+
+        <!-- Weight & Balance -->
+        <div class="card">
+            <div class="card-header">Weight & Balance</div>
+            <div class="grid-3">
+                <div class="form-group">
+                    <label>Pilot + Front Pax (lbs)</label>
+                    <input type="number" id="wb-pilot" class="form-control" value="170">
+                </div>
+                <div class="form-group">
+                    <label>Front Passenger (lbs)</label>
+                    <input type="number" id="wb-front-pax" class="form-control" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Rear Passengers (lbs)</label>
+                    <input type="number" id="wb-rear-pax" class="form-control" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Baggage (lbs)</label>
+                    <input type="number" id="wb-baggage" class="form-control" value="0">
+                </div>
+                <div class="form-group">
+                    <label>Fuel (gallons)</label>
+                    <input type="number" id="wb-fuel" class="form-control" value="53">
+                </div>
+            </div>
+            <button class="btn btn-primary" id="btn-calc-wb">Calculate W&B</button>
+            <div id="wb-results" class="hidden" style="margin-top:var(--space-md)">
+                <div id="wb-status"></div>
+                <div class="summary-grid" id="wb-summary" style="margin-top:var(--space-sm)"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AIRCRAFT TAB -->
+    <div id="tab-aircraft" class="tab-panel">
+        <div class="card">
+            <div class="card-header">
+                <span>Aircraft Profiles</span>
+                <button class="btn btn-sm btn-primary" id="btn-new-aircraft">Add Aircraft</button>
+            </div>
+            <div id="aircraft-list"></div>
+        </div>
+        <div id="aircraft-detail" class="hidden">
+            <div class="card">
+                <div class="card-header">
+                    <span id="aircraft-detail-title">Aircraft Details</span>
+                    <div>
+                        <button class="btn btn-sm btn-primary" id="btn-save-aircraft">Save</button>
+                        <button class="btn btn-sm btn-outline" id="btn-cancel-aircraft">Cancel</button>
+                    </div>
+                </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label>Tail Number</label>
+                        <input type="text" id="ac-tail" class="form-control" placeholder="N12345">
+                    </div>
+                    <div class="form-group">
+                        <label>Type/Model</label>
+                        <input type="text" id="ac-type" class="form-control" placeholder="Cessna 172S">
+                    </div>
+                    <div class="form-group">
+                        <label>Empty Weight (lbs)</label>
+                        <input type="number" id="ac-empty-weight" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Empty Weight Moment (x1000)</label>
+                        <input type="number" id="ac-empty-moment" class="form-control" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Max Takeoff Weight (lbs)</label>
+                        <input type="number" id="ac-max-weight" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Usable Fuel (gal)</label>
+                        <input type="number" id="ac-fuel" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Fuel Arm (in)</label>
+                        <input type="number" id="ac-fuel-arm" class="form-control" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>Taxi Fuel (gal)</label>
+                        <input type="number" id="ac-taxi-fuel" class="form-control" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>CG Forward Limit (in)</label>
+                        <input type="number" id="ac-cg-fwd" class="form-control" step="0.1">
+                    </div>
+                    <div class="form-group">
+                        <label>CG Aft Limit (in)</label>
+                        <input type="number" id="ac-cg-aft" class="form-control" step="0.1">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Performance Data (JSON)</label>
+                    <textarea id="ac-perf-json" class="form-control" rows="10" style="font-size:0.75rem"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REFERENCE TAB -->
+    <div id="tab-reference" class="tab-panel">
+        <div class="card">
+            <div class="card-header" id="ref-title">Quick Reference</div>
+            <div class="grid-2">
+                <div>
+                    <h3 style="margin-bottom:var(--space-sm)">V-Speeds</h3>
+                    <table class="data-table" id="vspeeds-table">
+                        <thead><tr><th>Speed</th><th>KIAS</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div>
+                    <h3 style="margin-bottom:var(--space-sm)">Weight Limits</h3>
+                    <table class="data-table" id="weights-table">
+                        <thead><tr><th>Item</th><th>Value</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Save Plan Modal -->
+<div id="save-modal" class="modal-overlay hidden">
+    <div class="modal">
+        <h3>Save Flight Plan</h3>
+        <div class="form-group">
+            <label>Plan Name</label>
+            <input type="text" id="plan-name-input" class="form-control" placeholder="e.g., KSEE to KCRQ Weekend">
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" id="btn-cancel-save">Cancel</button>
+            <button class="btn btn-primary" id="btn-confirm-save">Save</button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

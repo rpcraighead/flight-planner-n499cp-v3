@@ -1,0 +1,129 @@
+/* Header */
+.app-header {
+    background: var(--color-primary);
+    color: white;
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 var(--space-md);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-md);
+}
+
+.app-header .logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.app-header .logo img {
+    height: 36px;
+    width: 36px;
+    border-radius: 50%;
+}
+
+.app-header .logo h1 {
+    color: white;
+    font-size: 1.1rem;
+    white-space: nowrap;
+}
+
+.header-controls {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.aircraft-select {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+.aircraft-select option { color: var(--color-text); background: white; }
+
+.db-status {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.db-status .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--color-success);
+}
+.db-status .dot.empty { background: var(--color-warning); }
+
+/* Tab bar */
+.tab-bar {
+    background: white;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    position: sticky;
+    top: var(--header-height);
+    z-index: 90;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: var(--space-sm) var(--space-md);
+    font-family: var(--font-ui);
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    min-height: var(--tab-height);
+    transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn:hover { color: var(--color-primary); }
+.tab-btn.active {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-accent);
+}
+
+/* Main content */
+.main-content {
+    max-width: var(--content-max);
+    margin: 0 auto;
+    padding: var(--space-lg) var(--space-md);
+}
+
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* Grid helpers */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-md); }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-md); }
+
+.flex-row { display: flex; align-items: center; gap: var(--space-md); }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+/* Responsive */
+@media (max-width: 768px) {
+    .app-header .logo h1 { font-size: 0.9rem; }
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    .main-content { padding: var(--space-md) var(--space-sm); }
+    .tab-btn { padding: var(--space-sm) 12px; font-size: 0.8rem; }
+}
+
+@media (max-width: 480px) {
+    .app-header .logo h1 { display: none; }
+    .header-controls { gap: var(--space-sm); }
+}
